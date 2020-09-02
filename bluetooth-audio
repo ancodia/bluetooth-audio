@@ -1,4 +1,8 @@
 #!/bin/sh
+############################################################
+# Select the specified bluetooth device as pulseaudio sink #
+# If it isn't connected, select the analog output        #
+############################################################
 
 MAC_ADDRESS=$1
 ANALOG_OUT="analog-stereo"
@@ -12,22 +16,21 @@ device_index() {
 }
 
 device_connected() {
+  # is the device connected via bluetooth
   device=$1
   bluetoothctl info $device | grep "Connected: yes"
 }
 
 device_selected() {
+  # is the device selected as default sink in pulseaudio
   device=$1
   pactl info | grep "Default Sink:.*$device"
 }
 
-analog_audio_selected() {
-    pactl info | grep "Default Sink:.*analog-stereo"
-}
-
 headphone_plugged_in() {
-    grep -A4 -ri 'Headphone Playback Switch' /proc/asound/card*/* | \
-	grep "Amp-Out vals:.*0x00 0x00"
+  # is there something plugged into the analog out
+  grep -A4 -ri 'Headphone Playback Switch' /proc/asound/card*/* | \
+    grep "Amp-Out vals:.*0x00 0x00"
 }
 
 while true; do
@@ -37,7 +40,7 @@ while true; do
     # select analog output if cable plugged in or device not connected
     pacmd set-default-sink $(device_index $ANALOG_OUT)
     if [[ $(device_selected $ANALOG_OUT) ]]; then
-      echo "Analog audio out set as default by script" | \
+      echo "Analogue audio out set as default by bluetooth-audio" | \
         systemd-cat -p info
     fi
   elif [[ $(device_connected $MAC_ADDRESS) ]] && \
@@ -46,7 +49,7 @@ while true; do
     # select bluetooth device when connection detected
     pacmd set-default-sink $(device_index ${MAC_ADDRESS//:/_})
     if [[ $(device_selected ${MAC_ADDRESS//:/_}) ]]; then
-      echo "speaker $MAC_ADDRESS set as default by script" | \
+      echo "speaker $MAC_ADDRESS set as default by bluetooth-audio" | \
         systemd-cat -p info
     fi
   fi

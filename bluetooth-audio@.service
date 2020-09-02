@@ -1,0 +1,10 @@
+[Unit]
+Description=Autoselect connected bluetooth device
+
+[Service]
+StandardOutput=journal
+Environment="ARGS=%I"
+ExecStart=/usr/local/bin/bluetooth-audio.sh $ARGS
+
+[Install]
+WantedBy=default.target
